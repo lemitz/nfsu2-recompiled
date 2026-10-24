@@ -43,6 +43,9 @@ alone fixes the issue.
   when Android's logcat ring fills up.
 - Audio-health log tags use `NFSU2`, allowing the launcher's log filter to
   capture them.
+- The Android launcher, touch controls, dialogs, diagnostics and native startup
+  messages use English. The in-game language is selected separately from the
+  language files supplied with the user's game; no game text was translated.
 
 Performance should be compared under the same scene, render resolution, FPS cap,
 driver, game data and device conditions before attributing a gain to any one

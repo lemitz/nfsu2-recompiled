@@ -35,5 +35,6 @@ onlinemod/
 # Lifted server.dll (derived from the game binary)
 src/recomp/gen_server/
 
-# Tester diagnostic reports
+# Tester diagnostic reports (old Spanish and current English names)
 NFSU2-diagnostico-*.zip
+NFSU2-diagnostics-*.zip

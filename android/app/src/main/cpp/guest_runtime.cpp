@@ -284,7 +284,7 @@ uint32_t allocate(uint32_t bytes) {
 }
 void unsupported() {
     uint32_t index = (lastImport-importBase)/16;
-    throw GuestStop("HLE pendiente: " + imports.at(index).name + " desde " + hex(g_cur_func));
+    throw GuestStop("HLE not implemented: " + imports.at(index).name + " at " + hex(g_cur_func));
 }
 void getVersion() {
     uint32_t out = arg(0), bytes=read32(out);
@@ -861,7 +861,7 @@ extern "C" int nfs_android_resolution(){
 
 std::string connectGuestRuntime(const char* executable) {
     std::unique_lock<MachineMutex> guard(machine);machineLease=&guard;
-    if (memory) return "Runtime guest ya inicializado";
+    if (memory) return "Game runtime already initialized";
     State original; original.save();
     try {
         stopRequested=false;
@@ -917,7 +917,7 @@ std::string connectGuestRuntime(const char* executable) {
         shutdownD3D9Bridge();
 #endif
         original.load();
-        return "Entrada guest terminada: "+std::to_string(result);
+        return "Game entry point returned: "+std::to_string(result);
     } catch (const std::exception& e) {
         NFS_RUNTIME_LOG(ANDROID_LOG_WARN,"NFSU2","Guest integration boundary: %s",e.what());
         joinGuestThreads(guard);machineLease=nullptr;shutdownGuestSound();
@@ -925,7 +925,7 @@ std::string connectGuestRuntime(const char* executable) {
         shutdownD3D9Bridge();
 #endif
         original.load();
-        return std::string("Arranque guest detenido: ")+e.what();
+        return std::string("Game startup stopped: ")+e.what();
     }
 }
 void requestGuestRuntimeStop() {stopRequested=true;}
