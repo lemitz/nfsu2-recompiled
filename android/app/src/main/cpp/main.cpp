@@ -12,6 +12,7 @@
 #include <thread>
 #include <chrono>
 #include <filesystem>
+#include <fstream>
 #include <cstdlib>
 #include <unistd.h>
 #include "vertex_formats.h"
@@ -369,6 +370,21 @@ extern "C" JNIEXPORT void JNICALL Java_com_nfsu2_androidevolved_GameActivity_nat
     if(!entry){customVulkanError="No se pudo cargar el driver Vulkan "+l+". Elige el driver del sistema en el launcher.";return;}
     dxvkAndroidSetInstanceProcAddr(entry);
 }
+// Logcat's ring buffer can lose a slow race before the player returns to the
+// launcher. Keep bounded game-frame measurements in the app's private files.
+static void configureFrameTelemetry(android_app* app){
+    const char* files=app->activity->internalDataPath;
+    if(!files||!*files)return;
+    auto directory=std::filesystem::path(files);
+    std::error_code error;std::filesystem::create_directories(directory,error);
+    if(error)return;
+    auto path=(directory/"frame-telemetry.txt").string();
+    std::ofstream report(path,std::ios::trunc);
+    if(!report)return;
+    report<<"Game frame telemetry (this launch)\n";
+    report.close();
+    setenv("NFSU2_FRAME_TELEMETRY_PATH",path.c_str(),1);
+}
 static void configurePipelineCache(android_app* app){
     const char* files=app->activity->internalDataPath;
     setenv("DXVK_STATE_CACHE","0",1); // Keep startup usable if cache storage is unavailable.
@@ -385,6 +401,7 @@ static void configurePipelineCache(android_app* app){
     __android_log_print(ANDROID_LOG_INFO,"NFSU2","DXVK persistent pipeline state cache: %s",directory.c_str());
 }
 void android_main(android_app* app) {
+    configureFrameTelemetry(app);
     configurePipelineCache(app);
     Host host; app->userData = &host; app->onAppCmd = onCommand;app->onInputEvent=onInput;
     try {

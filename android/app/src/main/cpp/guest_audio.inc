@@ -86,9 +86,9 @@ void serviceGuestSound(){
                 ringMs=std::max(ringMs,1000.0*voice->samples.size()/voice->block()/voice->frequency);
             }
             object.maxPublishGap={};}}
-    NFS_RUNTIME_LOG(ANDROID_LOG_INFO,"NFSMW","Audio producer: maxPublishGap=%.2f ms ring=%.2f ms",publishGapMs,ringMs);
-    NFS_RUNTIME_LOG(ANDROID_LOG_INFO,"NFSMW","Audio mix: active=%u peak=%.4f clipped=%llu",active,double(peak),static_cast<unsigned long long>(clipped));
-    NFS_RUNTIME_LOG(ANDROID_LOG_INFO,"NFSMW","Audio health: xruns=%d buffer=%d/%d burst=%d rate=%u callbackPeak=%u us mode=%d",
+    NFS_RUNTIME_LOG(ANDROID_LOG_INFO,"NFSU2","Audio producer: maxPublishGap=%.2f ms ring=%.2f ms",publishGapMs,ringMs);
+    NFS_RUNTIME_LOG(ANDROID_LOG_INFO,"NFSU2","Audio mix: active=%u peak=%.4f clipped=%llu",active,double(peak),static_cast<unsigned long long>(clipped));
+    NFS_RUNTIME_LOG(ANDROID_LOG_INFO,"NFSU2","Audio health: xruns=%d buffer=%d/%d burst=%d rate=%u callbackPeak=%u us mode=%d",
         xruns,AAudioStream_getBufferSizeInFrames(soundStream),capacity,burst,soundMixer.rate,
         soundCallbackPeakUs.exchange(0,std::memory_order_relaxed),int(AAudioStream_getPerformanceMode(soundStream)));
 }

@@ -1,5 +1,7 @@
 # Need for Speed Underground 2 — Recompiled
 
+> **GT 6T test fork:** [Android changes and measured results](docs/GT6T_ANDROID_TEST.md).
+> No APK or game-derived code is published here; the downloads below are upstream releases.
 
 ### Android downloads / Descargas Android
 

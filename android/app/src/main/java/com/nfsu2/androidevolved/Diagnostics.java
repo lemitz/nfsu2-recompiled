@@ -87,6 +87,16 @@ final class Diagnostics {
             info.append("language=").append(GameOptions.language(context)).append('\n');
             add(zip, "informe.txt", info.toString().getBytes(StandardCharsets.UTF_8));
             add(zip, "logcat.txt", logcat(0));
+            // The game runs in a separate process. Its last frame measurements
+            // survive closing the task even when Android's logcat ring does not.
+            File telemetry = new File(context.getFilesDir(), "frame-telemetry.txt");
+            if (telemetry.isFile()) {
+                byte[] frames = null;
+                try (InputStream input = new java.io.FileInputStream(telemetry)) {
+                    frames = readLimited(input);
+                } catch (IOException ignored) { /* Telemetry is optional; keep the rest of the report. */ }
+                if (frames != null) add(zip, "frame-telemetry.txt", frames);
+            }
             ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
             if (Build.VERSION.SDK_INT >= 30 && manager != null) addExitInfo(zip, manager, context);
         } catch (Exception error) {

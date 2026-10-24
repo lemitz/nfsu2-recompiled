@@ -22,6 +22,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <cctype>
+#include <cstdlib>
 #include <chrono>
 #include <ctime>
 #include <thread>
@@ -354,7 +355,11 @@ void d3dDispatch(){
         if(deadline>now)yieldGuestMachine(0,deadline);
         else if(machine.hasWaiters()){auto before=std::chrono::steady_clock::now();yieldGuestMachine();++renderYields;renderWait+=std::chrono::steady_clock::now()-before;}
         static unsigned frames=0;static auto since=std::chrono::steady_clock::now();
-        if(++frames==120){serviceGuestSound();auto now=std::chrono::steady_clock::now();double seconds=std::chrono::duration<double>(now-since).count();
+        ++frames;
+        // At 2 FPS a frame-only report takes a minute; retain 120-frame windows
+        // for fast devices but report low-FPS intervals within five seconds.
+        if(frames>=120||std::chrono::steady_clock::now()-since>=std::chrono::seconds(5)){
+            serviceGuestSound();auto now=std::chrono::steady_clock::now();double seconds=std::chrono::duration<double>(now-since).count();
             NFS_RUNTIME_LOG(ANDROID_LOG_INFO,"NFSU2","Guest D3D9 presentation %.1f FPS over %.2f seconds; bridge ~%.2f ms/frame (present %.2f), %.0f calls/frame",
                 frames/seconds,seconds,double(bridgeTime.count())/1e6/frames,double(presentTime.count())/1e6/frames,double(bridgeCalls)/frames);
             std::array<unsigned,5> top{};
@@ -365,6 +370,24 @@ void d3dDispatch(){
                 used+=std::snprintf(detail+used,sizeof detail-used," %u.%u=%.2f",slot/256u,slot%256u,double(methodTime[slot].count())/1e6/frames);
             NFS_RUNTIME_LOG(ANDROID_LOG_INFO,"NFSU2","Bridge ms/frame by kind.method:%s; render handovers %.1f/frame, waiting %.2f ms/frame",used?detail:" none",
                 double(renderYields)/frames,double(renderWait.count())/1e6/frames);
+#ifdef __ANDROID__
+            // Keep slow-frame evidence even when the short logcat ring has been
+            // overwritten by Android UI logs before the launcher builds a report.
+            if(const char* path=std::getenv("NFSU2_FRAME_TELEMETRY_PATH")){
+                std::error_code error;
+                auto size=std::filesystem::file_size(path,error);
+                if(!error&&size>128u*1024u)std::ofstream(path,std::ios::trunc).close();
+                std::ofstream saved(path,std::ios::app);
+                saved<<std::fixed<<std::setprecision(2)
+                    <<"FPS="<<frames/seconds<<" seconds="<<seconds
+                    <<" bridgeMsFrame="<<double(bridgeTime.count())/1e6/frames
+                    <<" presentMsFrame="<<double(presentTime.count())/1e6/frames
+                    <<" callsFrame="<<double(bridgeCalls)/frames
+                    <<" handoversFrame="<<double(renderYields)/frames
+                    <<" waitMsFrame="<<double(renderWait.count())/1e6/frames
+                    <<" topMethods="<<(used?detail:" none")<<'\n';
+            }
+#endif
             renderYields=0;renderWait=std::chrono::nanoseconds{};
             methodTime.fill(std::chrono::nanoseconds{});
             frames=0;since=now;bridgeTime=presentTime=std::chrono::nanoseconds{};bridgeCalls=0;}

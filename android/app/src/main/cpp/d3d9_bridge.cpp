@@ -225,7 +225,13 @@ uint32_t dispatchGuestD3D9(uint32_t token,const uint32_t* args,uint32_t* argumen
             throw std::runtime_error("D3D9 COM Release without owned reference");
         }
         auto nativeReferences=object->Release();uint32_t references=--entry->references;
-        if(kind==5)NFS_RUNTIME_LOG(ANDROID_LOG_INFO,"NFSU2","Surface Release object=%08x guestRefs=%u nativeRefs=%u",args[0],references,uint32_t(nativeReferences));
+        if(kind==5){
+            // A race may release many temporary surfaces; keep a small sample
+            // without paying for an Android log write on every COM call.
+            static uint64_t surfaceReleases=0;
+            if(++surfaceReleases<=8||(surfaceReleases&1023u)==0)
+                NFS_RUNTIME_LOG(ANDROID_LOG_INFO,"NFSU2","Surface Release object=%08x guestRefs=%u nativeRefs=%u",args[0],references,uint32_t(nativeReferences));
+        }
         if(!references){
             if(entry->children)return uint32_t(nativeReferences);
             auto parent=entry->parent;retireGuestObject(args[0]);
